@@ -1,4 +1,6 @@
-# mines
+# Minesweeper by Quis
+
+Demo: [Firebase](https://minesweeper-by-quis.web.app/)
 
 ## Project setup
 ```

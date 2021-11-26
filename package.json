@@ -1,10 +1,11 @@
 {
-  "name": "mines",
+  "name": "quis-minesweeper",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build"
+    "build": "vue-cli-service build",
+    "deploy": "firebase deploy"
   },
   "dependencies": {
     "core-js": "^3.6.5",
@@ -14,7 +15,6 @@
     "@vue/cli-plugin-babel": "~4.5.0",
     "@vue/cli-service": "~4.5.0",
     "@vue/compiler-sfc": "^3.0.0",
-    "sass": "^1.26.5",
-    "sass-loader": "^8.0.2"
+    "firebase": "^9.5.0"
   }
 }
