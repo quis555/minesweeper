@@ -2,9 +2,6 @@ import {NEIGHBOUR_COMBINATIONS} from "../constant/neighbourCombinations";
 
 export default function useNeighbourIterator(gameField) {
     const getNeighbours = (gameSquare) => {
-        if (typeof gameField.value === 'undefined') {
-            debugger;
-        }
         const results = [];
         for (let i = 0; i < NEIGHBOUR_COMBINATIONS.length; i++) {
             const nY = gameSquare.y + NEIGHBOUR_COMBINATIONS[i].y;
