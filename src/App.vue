@@ -39,84 +39,45 @@
       <button type="button" class="btn" @click="onNewGameClick">Nowa gra</button>
     </div>
     <div>
-      <table class="game-settings">
-        <thead>
-        <tr>
-          <th colspan="3">
-            Ustawienia
-          </th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr>
-          <th>Rozmiar:</th>
-          <td>
-            <button class="btn" type="button" @click.prevent="onDecreaseSizeClick">-</button>&nbsp;{{ gameSize }}&nbsp;<button
-              class="btn" type="button" @click.prevent="onIncreaseSizeClick">+
-          </button>
-          </td>
-          <td rowspan="3">
-            <button type="button" class="btn" @click.prevent="onSetDefaultSettingsClick">Ustaw<br/>domyślne</button>
-          </td>
-        </tr>
-        <tr>
-          <th>Rozmiar pola gry:</th>
-          <td>Wysokość: <input type="number" v-model="settingsSizeY" @blur.prevent="validateSizeY"/><br/>Szerokość:
-            <input type="number"
-                   v-model="settingsSizeX"
-                   @blur.prevent="validateSizeX"/></td>
-        </tr>
-        <tr>
-          <th>Liczba bomb:</th>
-          <td>&nbsp;<button class="btn" type="button" @click.prevent="onDecreaseBombCountClick">-</button>
-            <input type="text" v-model="settingsBombCount" @blur.prevent="validateBombCount" class="bomb-count"/>
-            <button class="btn" type="button" @click.prevent="onIncreaseBombCountClick">
-              +
-            </button>
-          </td>
-        </tr>
-        <tr>
-          <td colspan="3" style="text-align: center">
-            <button type="button" class="btn" @click.prevent="onSetLevel1Click">Łatwy</button>
-            <button type="button" class="btn" @click.prevent="onSetLevel2Click">Średni</button>
-            <button type="button" class="btn" @click.prevent="onSetLevel3Click">Ekspert</button>
-          </td>
-        </tr>
-        </tbody>
-        <tfoot v-if="settingsBombCount !== bombCount || sizeY !== settingsSizeY || sizeX !== settingsSizeX">
-        <tr>
-          <td colspan="3">Rozpocznij nową grę aby zastosować ustawienia</td>
-        </tr>
-        </tfoot>
-      </table>
+      <minesweeper-settings
+          v-model:settings="settings"
+          v-model:game-size="gameSize"
+          :settings-changed="isSettingsChanged"
+          @setDefault="setDefaultSettings"
+          @setLevel="setLevel"
+      />
     </div>
   </div>
 </template>
 
 <script>
-import {ref} from 'vue';
-import Minesweeper from "./components/Minesweeper";
-import {DEFAULT_BOMB_COUNT, DEFAULT_GAME_SIZE, DEFAULT_SIZE_X, DEFAULT_SIZE_Y} from "./constant/gameDefaults";
-import clearInt from "./functions/clearInt";
+import {computed, ref} from 'vue';
+import Minesweeper from './components/Minesweeper';
+import {DEFAULT_BOMB_COUNT, DEFAULT_SIZE_X, DEFAULT_SIZE_Y} from './constant/gameDefaults';
+import useGameSettings from './composables/useGameSettings';
+import MinesweeperSettings from './components/MinesweeperSettings';
 
 export default {
   name: 'App',
-  components: {Minesweeper},
+  components: {MinesweeperSettings, Minesweeper},
   setup() {
     const gameKey = ref(1);
     const sizeY = ref(DEFAULT_SIZE_Y);
     const sizeX = ref(DEFAULT_SIZE_X);
     const bombCount = ref(DEFAULT_BOMB_COUNT);
-    const gameSize = ref(DEFAULT_GAME_SIZE);
     const errorMessage = ref('');
     const gameLost = ref(false);
     const gameWon = ref(false);
     const bombsLeft = ref(0);
     const startGameTime = ref(Date.now());
     const gameTime = ref('00:00');
-    const settingsSizeY = ref(DEFAULT_SIZE_Y);
-    const settingsSizeX = ref(DEFAULT_SIZE_X);
-    const settingsBombCount = ref(DEFAULT_BOMB_COUNT);
+
+    const {
+      gameSize,
+      settings,
+      setDefaultSettings,
+      setLevel,
+    } = useGameSettings();
 
     const onGameWon = () => {
       gameWon.value = true;
@@ -133,9 +94,9 @@ export default {
       gameWon.value = false;
       errorMessage.value = '';
 
-      sizeY.value = settingsSizeY.value;
-      sizeX.value = settingsSizeX.value;
-      bombCount.value = settingsBombCount.value;
+      sizeY.value = settings.value.sizeY;
+      sizeX.value = settings.value.sizeX;
+      bombCount.value = settings.value.bombCount;
 
       startGameTime.value = Date.now();
       gameTime.value = '00:00';
@@ -152,94 +113,10 @@ export default {
       }
     }, 1000);
 
-    const onSetDefaultSettingsClick = () => {
-      settingsSizeY.value = DEFAULT_SIZE_Y;
-      settingsSizeX.value = DEFAULT_SIZE_X;
-      settingsBombCount.value = DEFAULT_BOMB_COUNT;
-      gameSize.value = DEFAULT_GAME_SIZE;
-    };
-
-    const onSetLevel1Click = () => {
-      settingsSizeY.value = 9;
-      settingsSizeX.value = 9;
-      settingsBombCount.value = 10;
-    };
-
-    const onSetLevel2Click = () => {
-      settingsSizeY.value = 16;
-      settingsSizeX.value = 16;
-      settingsBombCount.value = 40;
-    };
-
-    const onSetLevel3Click = () => {
-      settingsSizeY.value = 16;
-      settingsSizeX.value = 30;
-      settingsBombCount.value = 99;
-    };
-
-    const onDecreaseSizeClick = () => {
-      if (gameSize.value > 1) {
-        gameSize.value--;
-      }
-    };
-    const onIncreaseSizeClick = () => {
-      if (gameSize.value < 10) {
-        gameSize.value++;
-      }
-    };
-
-    const onDecreaseBombCountClick = () => {
-      if (settingsBombCount.value > 5) {
-        settingsBombCount.value--;
-      }
-    };
-    const onIncreaseBombCountClick = () => {
-      if (settingsBombCount.value < 500) {
-        settingsBombCount.value++;
-      }
-    };
-
-    const validateBombCount = () => {
-      let value = clearInt(settingsBombCount.value);
-      if (isNaN(value)) {
-        value = DEFAULT_BOMB_COUNT;
-      }
-      if (value < 5) {
-        value = 5;
-      } else if (value > 500) {
-        value = 500;
-      }
-      settingsBombCount.value = value;
-    };
-
-    const validateSizeY = () => {
-      let value = clearInt(settingsSizeY.value);
-      if (isNaN(value)) {
-        value = DEFAULT_SIZE_Y;
-      } else if (value > 75) {
-        value = 75;
-      } else if (value < 5) {
-        value = 5;
-      }
-      settingsSizeY.value = value;
-    };
-
-    const validateSizeX = () => {
-      let value = clearInt(settingsSizeX.value);
-      if (isNaN(value)) {
-        value = DEFAULT_SIZE_Y;
-      } else if (value > 50) {
-        value = 50;
-      } else if (value < 5) {
-        value = 5;
-      }
-      settingsSizeX.value = value;
-    };
-
     const onInvalidGameConfigurationThrown = (msg) => {
       errorMessage.value = msg;
       gameLost.value = true;
-      onSetDefaultSettingsClick();
+      setDefaultSettings();
     };
 
     return {
@@ -252,25 +129,17 @@ export default {
       bombsLeft,
       errorMessage,
       gameSize,
+      settings,
       gameTime,
       onGameWon,
       onGameLost,
       onNewGameClick,
-      settingsSizeY,
-      settingsSizeX,
-      settingsBombCount,
-      onSetDefaultSettingsClick,
-      onDecreaseSizeClick,
-      onIncreaseSizeClick,
-      onDecreaseBombCountClick,
-      onIncreaseBombCountClick,
-      validateBombCount,
-      validateSizeY,
-      validateSizeX,
+      setLevel,
+      setDefaultSettings,
       onInvalidGameConfigurationThrown,
-      onSetLevel1Click,
-      onSetLevel2Click,
-      onSetLevel3Click,
+      isSettingsChanged: computed(() => {
+        return bombCount.value !== settings.value.bombCount || sizeY.value !== settings.value.sizeY || sizeX.value !== settings.value.sizeX;
+      }),
     };
   }
 }
@@ -314,35 +183,6 @@ table.game-status {
 
 table.game-status td {
   padding: 5px 30px;
-}
-
-table.game-settings thead th {
-  font-size: 24px;
-}
-
-table.game-settings tbody th {
-  text-align: right;
-}
-
-table.game-settings tfoot td {
-  text-align: center;
-}
-
-input[type=text], input[type=number] {
-  padding: 4px;
-  margin: 2px;
-  border-radius: 5px;
-  border: 1px solid #6d6d6d;
-  text-align: center;
-}
-
-input[type=number] {
-  width: 40px;
-}
-
-input.bomb-count {
-  width: 50px;
-  text-align: center;
 }
 
 .game-won {
